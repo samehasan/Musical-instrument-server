@@ -27,8 +27,15 @@ async function run() {
     await client.connect();
 
     const InstructorCollection = client.db("MILSDB").collection("Instructor");
+    const ClassesCollection = client.db("MILSDB").collection("Classes");
+
     app.get('/instructor', async (req, res) => {
         const result = await InstructorCollection.find().toArray();
+        res.send(result);
+      })
+
+      app.get('/classes', async (req, res) => {
+        const result = await ClassesCollection.find().toArray();
         res.send(result);
       })
     // Send a ping to confirm a successful connection
