@@ -28,6 +28,7 @@ async function run() {
 
     const InstructorCollection = client.db("MILSDB").collection("Instructor");
     const ClassesCollection = client.db("MILSDB").collection("Classes");
+    const cartCollection = client.db("MILSDB").collection("carts");
 
     app.get('/instructor', async (req, res) => {
         const result = await InstructorCollection.find().toArray();
@@ -36,6 +37,12 @@ async function run() {
 
       app.get('/classes', async (req, res) => {
         const result = await ClassesCollection.find().toArray();
+        res.send(result);
+      })
+
+      app.post('/carts', async (req, res) => {
+        const item = req.body;
+        const result = await cartCollection.insertOne(item);
         res.send(result);
       })
     // Send a ping to confirm a successful connection
