@@ -142,12 +142,8 @@ async function run() {
       res.send(result);
 
     })
+//instructor collectn todo
 
-
-    app.get('/instructor', async (req, res) => {
-      const result = await InstructorCollection.find().toArray();
-      res.send(result);
-    })
 
     app.get('/classes', async (req, res) => {
       const result = await ClassesCollection.find().toArray();
@@ -161,7 +157,7 @@ async function run() {
       res.send(result);
     })
 
-    app.post('/classes', verifyJWT, verifyAdmin, async (req, res) => {
+    app.post('/classes', verifyJWT, async (req, res) => {
       const newItem = req.body;
       const result = await ClassesCollection.insertOne(newItem)
       res.send(result);
