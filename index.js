@@ -143,7 +143,21 @@ async function run() {
 
     })
 //instructor collectn todo
-
+app.get('/instructors', async (req, res) => {
+    try {
+      const client = await MongoClient.connect(mongoURI);
+      const db = client.db(dbName);
+  
+      const instructors = await db.collection('users').find({ role: 'instructor' }).toArray();
+  
+      res.json(instructors);
+    } catch (error) {
+      console.error('Error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    } finally {
+      client.close();
+    }
+  });
 
     app.get('/classes', async (req, res) => {
       const result = await ClassesCollection.find().toArray();
