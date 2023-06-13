@@ -10,23 +10,23 @@ app.use(cors());
 app.use(express.json());
 
 const verifyJWT = (req, res, next) => {
-    const authorization = req.headers.authorization;
-    if (!authorization) {
-      return res.status(401).send({ error: true, message: 'unauthorized access' });
-    }
-    // bearer token
-    const token = authorization.split(' ')[1];
-  
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
-      if (err) {
-        return res.status(401).send({ error: true, message: 'unauthorized access' })
-      }
-      req.decoded = decoded;
-      next();
-    })
+  const authorization = req.headers.authorization;
+  if (!authorization) {
+    return res.status(401).send({ error: true, message: 'unauthorized access' });
   }
+  // bearer token
+  const token = authorization.split(' ')[1];
 
-const { MongoClient, ServerApiVersion,ObjectId } = require('mongodb');
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(401).send({ error: true, message: 'unauthorized access' })
+    }
+    req.decoded = decoded;
+    next();
+  })
+}
+
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ssocgpa.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -48,124 +48,155 @@ async function run() {
     const cartCollection = client.db("MILSDB").collection("carts");
 
     app.post('/jwt', (req, res) => {
-        const user = req.body;
-        const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
-  
-        res.send({ token })
-      })
-  
-      const verifyAdmin = async (req, res, next) => {
-        const email = req.decoded.email;
-        const query = { email: email }
-        const user = await usersCollection.findOne(query);
-        if (user?.role !== 'admin') {
-          return res.status(403).send({ error: true, message: 'forbidden message' });
-        }
-        next();
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '3h' })
+
+      res.send({ token })
+    })
+
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email }
+      const user = await usersCollection.findOne(query);
+      if (user?.role !== 'admin') {
+        return res.status(403).send({ error: true, message: 'forbidden message' });
       }
-      
+      next();
+    }
+
+   
+
     app.get('/users', async (req, res) => {
-        const result = await usersCollection.find().toArray();
-        res.send(result);
-      });
+      const result = await usersCollection.find().toArray();
+      res.send(result);
+    });
 
     app.post('/users', async (req, res) => {
-        const user = req.body;
-        const query = { email: user.email }
-        const existingUser = await usersCollection.findOne(query);
-  
-        if (existingUser) {
-          return res.send({ message: 'user already exists' })
-        }
-  
-        const result = await usersCollection.insertOne(user);
-        res.send(result);
-      });
+      const user = req.body;
+      const query = { email: user.email }
+      const existingUser = await usersCollection.findOne(query);
 
-      app.get('/users/admin/:email', verifyJWT, async (req, res) => {
-        const email = req.params.email;
-  
-        if (req.decoded.email !== email) {
-          res.send({ admin: false })
-        }
-  
-        const query = { email: email }
-        const user = await usersCollection.findOne(query);
-        const result = { admin: user?.role === 'admin' }
-        res.send(result);
-      })
-  
+      if (existingUser) {
+        return res.send({ message: 'user already exists' })
+      }
 
-      app.patch('/users/admin/:id', async (req, res) => {
-        const id = req.params.id;
-        console.log(id);
-        const filter = { _id: new ObjectId(id) };
-        const updateDoc = {
-          $set: {
-            role: 'admin'
-          },
-        };
-  
-        const result = await usersCollection.updateOne(filter, updateDoc);
-        res.send(result);
-  
-      })
-  
+      const result = await usersCollection.insertOne(user);
+      res.send(result);
+    });
+
+    app.get('/users/admin/:email', verifyJWT, async (req, res) => {
+      const email = req.params.email;
+
+      if (req.decoded.email !== email) {
+        res.send({ admin: false })
+      }
+
+      const query = { email: email }
+      const user = await usersCollection.findOne(query);
+      const result = { admin: user?.role === 'admin' }
+      res.send(result);
+    })
+
+
+    app.patch('/users/admin/:id', async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: 'admin'
+        },
+      };
+
+      const result = await usersCollection.updateOne(filter, updateDoc);
+      res.send(result);
+
+    })
+
+    app.get('/users/instructor/:email', verifyJWT, async (req, res) => {
+      const email = req.params.email;
+
+      if (req.decoded.email !== email) {
+        res.send({ instructor: false })
+      }
+
+      const query = { email: email }
+      const user = await usersCollection.findOne(query);
+      const result = { instructor: user?.role === 'instructor' }
+      res.send(result);
+    })
+
+    app.patch('/users/instructor/:id', async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: 'instructor'
+        },
+      };
+
+      const result = await usersCollection.updateOne(filter, updateDoc);
+      res.send(result);
+
+    })
+
 
     app.get('/instructor', async (req, res) => {
-        const result = await InstructorCollection.find().toArray();
-        res.send(result);
-      })
+      const result = await InstructorCollection.find().toArray();
+      res.send(result);
+    })
 
-      app.get('/classes', async (req, res) => {
-        const result = await ClassesCollection.find().toArray();
-        res.send(result);
-      })
-      app.delete('/classes/:id', verifyJWT, verifyAdmin, async (req, res) => {
-        const id = req.params.id;
-        const query = { _id: new ObjectId(id) }
-        const result = await ClassesCollection.deleteOne(query);
-        res.send(result);
-      })
-  
-      app.post('/classes', verifyJWT, verifyAdmin, async (req, res) => {
-        const newItem = req.body;
-        const result = await ClassesCollection.insertOne(newItem)
-        res.send(result);
-      })
-  
+    app.get('/classes', async (req, res) => {
+      const result = await ClassesCollection.find().toArray();
+      res.send(result);
+    })
+    
+    app.delete('/classes/:id', verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await ClassesCollection.deleteOne(query);
+      res.send(result);
+    })
 
-      app.get('/carts', verifyJWT, async (req, res) => {
-        const email = req.query.email;
-  
-        if (!email) {
-          res.send([]);
-        }
-  
-        const decodedEmail = req.decoded.email;
-        if (email !== decodedEmail) {
-          return res.status(403).send({ error: true, message: 'forbiden access' })
-        }
-  
-        const query = { email: email };
-        const result = await cartCollection.find(query).toArray();
-        res.send(result);
-      });
-  
-      app.post('/carts', async (req, res) => {
-        const item = req.body;
-        console.log(item);
-        const result = await cartCollection.insertOne(item);
-        res.send(result);
-      })
-  
-      app.delete('/carts/:id', async (req, res) => {
-        const id = req.params.id;
-        const query = { _id: new ObjectId(id) };
-        const result = await cartCollection.deleteOne(query);
-        res.send(result);
-      })
-  
+    app.post('/classes', verifyJWT, verifyAdmin, async (req, res) => {
+      const newItem = req.body;
+      const result = await ClassesCollection.insertOne(newItem)
+      res.send(result);
+    })
+
+
+    app.get('/carts', verifyJWT, async (req, res) => {
+      const email = req.query.email;
+
+      if (!email) {
+        res.send([]);
+      }
+
+      const decodedEmail = req.decoded.email;
+      if (email !== decodedEmail) {
+        return res.status(403).send({ error: true, message: 'forbidden access' })
+      }
+
+      const query = { email: email };
+      const result = await cartCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.post('/carts', async (req, res) => {
+      const item = req.body;
+      console.log(item);
+      const result = await cartCollection.insertOne(item);
+      res.send(result);
+    })
+
+    app.delete('/carts/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await cartCollection.deleteOne(query);
+      res.send(result);
+    })
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
@@ -178,11 +209,9 @@ run().catch(console.dir);
 
 
 app.get('/', (req, res) => {
-  res.send('server is')
+  res.send('server is running');
 })
 
 app.listen(port, () => {
-  console.log(` on port ${port}`);
+  console.log(`Server is running on port ${port}`);
 })
-
-    
