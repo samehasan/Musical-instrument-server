@@ -42,7 +42,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
     const usersCollection = client.db("MILSDB").collection("users");
     const InstructorCollection = client.db("MILSDB").collection("Instructor");
     const ClassesCollection = client.db("MILSDB").collection("Classes");
@@ -142,7 +142,7 @@ async function run() {
       res.send(result);
 
     })
-//instructor collectn todo
+//instructor collectn
 app.get('/instructors', async (req, res) => {
     try {
       const client = await MongoClient.connect(mongoURI);
